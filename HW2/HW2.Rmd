@@ -37,7 +37,13 @@ We will begin with derivation of a closed-form expression for the ordinary least
 
 LASSO 
 
-Next, we consider the derivation of closed-form expression for the LASSO regression estimator of the regression coefficients $\beta$. According to equation (27) on the 'Regularized Regression' lecture slides, $\hat{\beta}_n^{\text{LASSO}}\equiv\text{ arg min }_{\beta \in \textbf{R}^J}\|\textbf{Y}_n-\textbf{X}_n\beta\|_2^2 + \lambda\|\beta\|_1=\text{ arg min }_{\beta \in \textbf{R}^J}\sum_{i=1}^n\big(Y_i - \sum_{j=1}^J\beta_jX_{i,j}\big)^2+ \lambda\sum_{i=1}^J|\beta_j|$
+Next, we consider the derivation of closed-form expression for the LASSO regression estimator of the regression coefficients $\beta$. According to equation (27) on the 'Regularized Regression' lecture slides, $\hat{\beta}_n^{\text{LASSO}}\equiv\text{ arg min }_{\beta \in \textbf{R}^J}\|\textbf{Y}_n-\textbf{X}_n\beta\|_2^2 + \lambda\|\beta\|_1=\text{ arg min }_{\beta \in \textbf{R}^J}\sum_{i=1}^n\big(Y_i - \sum_{j=1}^J\beta_jX_{i,j}\big)^2+ \lambda\sum_{j=1}^J|\beta_j|$ where $\lambda \geq 0$. Equation (28) on the 'Regularized Regression' lecture slides points out that an equivalent definition of the LASSO estimator, which makes the constraint on the L1-norm more explicit, is $\hat{\beta}_n^{\text{LASSO}}=\text{ arg min }_{\beta \in \textbf{R}^J}\|\textbf{Y}_n-\textbf{X}_n\beta\|_2^2$ subject to $\|\beta\|_1\leq k$ where there is a one-to-one correspondence between the shrinkage parameter, $\lambda$ and the Lagrange multiplier, $k$. Note that this is also equivalent to $\hat{\beta}_n^{\text{LASSO}}=\text{ arg min }_{\beta \in \textbf{R}^J}\sum_{i=1}^n\big(Y_i - \sum_{j=1}^J\beta_jX_{i,j}\big)^2$ subject to $\sum_{j=1}^J|\beta_j|\leq k$. We let $\hat{\beta}_{j}^{\text{OLS}}$ be the full least squares estimates and we let $k_0=\sum_{j=1}^J|\hat{\beta}_{j}^{\text{OLS}}|$. Values of $k < k_0$ will cause shrinkage towards zero and if $k > k_0$ then $\hat{\beta}_j^{\text{LASSO}}= \hat{\beta}_j^{\text{OLS}}$. According to the 2006 Tibshirani article, *Regression Shrinkage and Selection via the Lasso*, for orthonormal covariates, the LASSO estimator has the form, $\hat{\beta}_j^{\text{LASSO}} = \text{sign}(\hat{\beta}_{j}^{\text{OLS}})(|\hat{\beta}_{j}^{\text{OLS}}|-\gamma)^{+}$
+where $\gamma$ is determined by the condition $\lambda=\sum_{j=1}^J|\hat{\beta}_j^{\text{LASSO}}|$. This is called a 'soft threshold' estimator by Donoho and Johnstone (1994). We can denote our estimator with respect to $n$ as $\hat{\beta}_{n,j}^{\text{LASSO}}= \mathcal{S}(\hat{\beta}_{n, j}^{\text{OLS}}, \lambda)$ where the 'soft-thresholding operator', $\mathcal{S}$, is defined as
+
+$$\mathcal{S}(z,\lambda)= \begin{cases} z-\lambda & z > \lambda \\
+0 & |z| \leq \lambda \\
+z+\lambda & z < -\lambda \\
+\end{cases}$$
 
 \vspace{.1in}
 
@@ -90,6 +96,12 @@ Simulate a learning set $\mathcal{L}_n = {(X_i,Y_i) : i = 1,...,n}$ of $n = 100$
 
 Provide numerical and graphical summaries of the simulation model and of the learning set.
 
+\vspace{.2in}
+
+**Solution:**
+
+\vspace{.05in}
+
 ```{r, warning=FALSE, message=FALSE}
 ##########################
 # Given Information
@@ -113,7 +125,7 @@ superheat(gamma)
 # regression coefficients, beta
 Beta <- c((-J/2+1):0,0:(J/2-1))/10
 Beta
-barplot(Beta, main = expression("Beta Coefficients for Each Covariate"),
+barplot(Beta, main = expression("Beta Coefficients"),
 col=cm.colors(10), names.arg = c("X1", "X2", "X3", "X4", "X5", "X6", "X7", 
                  "X8", "X9", "X10"))
 
@@ -127,11 +139,11 @@ n <- 100
 X_L <- mvrnorm(n = n, mu = rep(0,J), Sigma = gamma)
 dim(X_L)
 boxplot(X_L, cex=.2, col=cm.colors(10),
-        main = "Boxplots of Learning Set Covariates")
+        main = "Learning Set Covariates")
 
 # Outcome 
 Y_L <- rnorm(n = n, mean = X_L %*% Beta, sd = sigma)
-hist(Y_L,col=cm.colors(1), main = "Histogram of Learning Set Outcome")
+hist(Y_L,col=cm.colors(1), main = "Learning Set Outcome")
 summary(Y_L)
 
 # Combine Outcome and Covariates to make Learning Set 
@@ -144,7 +156,7 @@ colnames(Lset) <- c("X1", "X2", "X3", "X4", "X5", "X6", "X7",
 summary(Lset)
 # we can visualize the correlations in a heatmap
 superheat(cor(Lset))
-hist(Lset, col=cm.colors(1), main = "Histogram of Learning Set")
+hist(Lset, col=cm.colors(1), main = "Learning Set")
 
 # Adapted from Sandrine's 'Regularized Regression:Example' code
 par(mfrow=c(1,2))
@@ -193,6 +205,13 @@ $$MSE(\hat{\beta}_n ; \mathcal{L}_n ) = \frac{1}{n}\|Y_n-X_n\hat{\beta}_n\|_2^2.
 Provide and comment on plots of the MSE versus the shrinkage parameter and report which values of the shrinkage parameter minimize risk.
 
 **Hint.** You may use the \texttt{glmnet} function from the \texttt{glmnet} package, but be mindful of centering and scaling, of the handling of the intercept, and of the parameterization of the elastic net penalty.
+
+\vspace{.2in}
+
+**Solution:**
+
+\vspace{.05in}
+
 
 ```{r, warning=FALSE, message=FALSE}
 
@@ -254,6 +273,7 @@ myPlotBeta <- function(x,beta,type="l",lwd=2,lty=1,col=1:ncol(beta),
 ###########################
 # Estimators
 ###########################
+
 lambda <- seq(0,100,by=1)
 
 ridge <- myGlmnet(x = Lset_X, y = Lset_Y, x.new = Tset_X, alpha = 0, lambda = lambda/(nrow(Lset_X)))
@@ -276,7 +296,7 @@ enet$beta.hat[1,]
 matplot(lambda, cbind(ridge$df,lasso$df, enet$df), 
         type="l", lwd=2, lty=1, col=5:7,
         xlab=expression(lambda), ylab = "effective df", 
-        main="Learning Set: Ridge, LASSO, and Elastic Net")
+        main="Learning Set: Ridge, LASSO, Elastic Net")
 legend("top", c("Ridge","LASSO", "Elastic Net"), fill=5:7)
 
 myPlotBeta(lambda, ridge$beta.hat[,-1],type="l",lwd=2, ylab=expression(hat(beta)), 
@@ -305,7 +325,7 @@ summary(mse.Lset)
 
 matplot(lambda, mse.Lset, type="l",lwd=2,lty=1,col=5:7,
         xlab=expression(lambda), ylab="MSE[Y]",
-        main="Learning Set: Ridge, LASSO, and Elastic Net")
+        main="Learning Set: Ridge, LASSO, Elastic Net")
 legend("top",c("Ridge","LASSO", "Elastic Net"),fill=5:7)
 
 ```
@@ -314,6 +334,12 @@ We notice an inverse relationship between the effective degrees of freedom and t
 
 #### c) Performance assessment on test set. 
 For each estimator in b), obtain the test set risk $MSE(\hat{\beta}_n; \mathcal{T}_{n_{TS}})$ for the squared error loss function (i.e., MSE). Provide and comment on plots of risk versus the shrinkage parameter and report which values of the shrinkage parameter minimize risk. Examine the corresponding three “optimal” estimators of the regression coefficients.
+
+\vspace{.2in}
+
+**Solution:**
+
+\vspace{.05in}
 
 ```{r, warning=FALSE, message=FALSE}
 ###########################
@@ -338,7 +364,7 @@ matplot(lambda, cbind(ridge$mse, mse.ridge.Tset,
                       enet$mse, mse.enet.Tset), 
         type="l", lwd=3,col=rep(5:7, each=2), lty=rep(2:1,2),
         xlab=expression(lambda), ylab="MSE[Y]",
-        main="Ridge, LASSO, and Elastic Net")
+        main="Ridge, LASSO, Elastic Net")
 legend("topright", c("Learning Set", "Test Set"), lty=2:1, lwd=2)
 legend("top", c("Ridge","LASSO", "Elastic Net"), fill=5:7)
 lines(lambda[rep(l1, 2)], c(0,min(mse.ridge.Tset)), col=5, lty=3)
@@ -375,7 +401,7 @@ matplot(t(cbind(ridge$beta.hat[1,-1], ridge$beta.hat[l1,-1],
                 lasso$beta.hat[l2,-1], enet$beta.hat[l3,-1])),
         type="b", lty=1, lwd=2, pch=16, col=1:ncol(X_T), 
         ylab=expression(hat(beta)), axes=FALSE, 
-        main="Optimal Beta Coefficient")
+        main="Optimal Regression Coefficients")
 box()
 axis(1, at=1:4, c("OLS", "Ridge", "LASSO", "Elastic Net"))
 axis(2)
@@ -390,7 +416,7 @@ barplot(c(ridge$beta.hat[1,-1],ridge$beta.hat[l1,-1],lasso$beta.hat[l2,-1],
           enet$beta.hat[l3,-1])[as.vector(sapply(1:8,function(x)c(x,x+4,x+8,x+16)))],
        col=rep(1:ncol(X_T),each=4),density=rep(c(-9,66,33,10),ncol(X_T)),
        border=TRUE, ylab=expression(hat(beta)), names.arg="",
-       las=2, main="Optimal Betas for Each Covariate and Estimator")
+       las=2, main="Optimal Regression Coefficients")
 legend("bottom", colnames(Lset)[1:10], fill=1:ncol(X_T), 
        pt.cex = 1, cex=.8, bty = "n", horiz = TRUE)
 legend("top", density=c(-9,66,33,10), 
@@ -427,7 +453,7 @@ Thus, for the parameter $\beta = (\beta_j : j = 1,...,J) \in \textbf{R}^J$, a J-
 
 According to the slides, and we can see here, that the ridge estimator is biased. As the shrinkage parameter increases, the bias tends to increase while variance tends to decrease. This is because we become more data-adaptive and less smooth as we increase the shrinkage parameter, highlighting the bias-variance trade-off of the ridge regression estimator. It should be noted that we assume the model in Equation (1) and the bias and covariance matrices of the ridge regression estimator are conditional on the design matrix of the learning set.
 
-```{r,warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE}
 ###########################
 # Setting up
 ###########################
@@ -472,19 +498,19 @@ ridge_perf <- myRidgePerf(x=Lset_X, y=Lset_Y, beta=Beta, sigma=gamma, lambda=lam
 
 myPlotBeta(lambda, ridge_perf$bias, labels=colnames(Lset[,1:10]), right=TRUE, 
            ylab=expression("Bias["~ hat(beta) ~ "]"), 
-           main = "Ridge: Bias for Each Covariate")
+           main = "Ridge: Bias")
 
 # Variance
 
 myPlotBeta(lambda, ridge_perf$var, labels=colnames(Lset[,1:10]), right=FALSE, 
            ylab=expression("Var["~ hat(beta) ~ "]"),
-           main = "Ridge: Variance for Each Covariate")
+           main = "Ridge: Variance")
 
 # MSE
 
 myPlotBeta(lambda, ridge_perf$mse, labels=colnames(Lset[,1:10]), right=TRUE, 
            ylab=expression("MSE["~ hat(beta) ~ "]"),
-           main = "Ridge: MSE for Each Covariate")
+           main = "Ridge: MSE")
 
 ###########################
 # Optimal lambda with beta
@@ -495,35 +521,99 @@ lambda_optimal <- lambda[index]
 
 beta_hat <- rep(NA,J)
 beta <- rep(NA,J)
-error <- rep(NA,J)
+abs_error <- rep(NA,J)
 for(j in 1:J){
    beta_hat[j] <- ridge_perf$beta.hat[index[j],j]
    beta[j] <- Beta[j]
-   error[j] <- beta_hat[j] - beta[j]
+   abs_error[j] <- abs(beta_hat[j] - beta[j])
  }
 
-df <- data.frame(lambda_optimal, beta_hat, beta, error)
+df <- data.frame(lambda_optimal, beta_hat, beta, abs_error)
 rownames(df) <- c("X1","X2","X3","X4","X5",
                   "X6","X7","X8","X9","X10")
 
 # plot of optimal lambda
 
-barplot(df$lambda_optimal, main = expression("Ridge: Optimal shrinkage parameter for each covariate"), ylab = expression(lambda), col=cm.colors(10), names.arg = rownames(df))
+barplot(df$lambda_optimal, main = expression("Ridge: Optimal Shrinkage Parameter"), ylab = expression(lambda), col=cm.colors(10), names.arg = rownames(df))
 
-barplot(df$beta_hat, main = expression("Ridge: Corresponding regression coefficient for the optimal shrinkage parameter"), ylab = expression(hat(beta)), col=cm.colors(10), names.arg = rownames(df))
+barplot(df$beta_hat, main = expression("Ridge: Corresponding Regression Coefficient for the Optimal Shrinkage Parameter"), ylab = expression(hat(beta)), col=cm.colors(10), names.arg = rownames(df))
 
-par(mfrow=c(1,1))
-barplot(df$error, main = expression("Ridge: Error for the Optimal shrinkage 
-        parameter for each covariate"),
-ylab = "beta.hat - beta", col=cm.colors(10), names.arg = rownames(df))
+
+barplot(df$abs_error, main = expression("Ridge: Absolute error for the Optimal Shrinkage 
+        Parameter"),
+ylab = "absolute difference between beta and beta.hat", col=cm.colors(10), names.arg = rownames(df))
 
 df
 ```
 
-The graphs nicely display the bias-variance trade-off mentioned in the beginning of this solution. We see that as we increase the shrinkage parameter the bias increases and the variance decreases. The MSE plot shows us that there surely exist optimal values of the shrinkage parameter; as we increase the shrinkage parameter the MSE decrease a bit across all covariates and then it increases if the shrinkage parameter increases too much. We find the values of the optimal shrinkage parameter (those that minimize the MSE) with the corresponding regression coefficient estimate and compare this to the true regression coefficients in the last plot. There is a noticable amount of variablility for the error (distance from the estimate to the truth) across the covariates.
+The graphs nicely display the bias-variance trade-off mentioned in the beginning of this solution. We see that as we increase the shrinkage parameter the bias increases and the variance decreases. The MSE plot shows us that there surely exist optimal values of the shrinkage parameter; as we increase the shrinkage parameter the MSE decrease a bit across all covariates and then it increases if the shrinkage parameter increases too much. We find the values of the optimal shrinkage parameter (those that minimize the MSE) with the corresponding regression coefficient estimate and compare this to the true regression coefficients in the last plot. There is a noticable amount of variablility for the absolute error (absolute difference from the estimate to the truth) across the covariates.
 
 #### e) LASSO regression: Bias, variance, and mean squared error of estimated regression coefficients. 
 For the LASSO, there are no closed-form expressions for the bias, variance, and mean squared error of the estimators of the regression coefficients.
 
 Describe how one can estimate these quantities using the simulation model of a). In particular, provide and comment on graphical displays of the bias, variance, and MSE of the LASSO estimators based on the learning set. For each coefficient, provide the value of the shrinkage parameter $\lambda$ minimizing the MSE and the corresponding estimate.
+
 Again, be specific about assumptions and which variables you are conditioning on.
+
+\vspace{.2in}
+
+**Solution:**
+
+\vspace{.05in}
+
+Since the lasso estimate is a non-linear and non-differentiable function of the response values even for a fixed value of the shrinkage parameter, it is not straightforward to obtain accurate estimates for the bias, variance, and mean squared error of the regression coefficients. Tibshirani, 2006 suggests the bootstrap. This is a resampling method that mimics the availability of several datasets by resampling from the same unique dataset. Here is the general procedure:
+
+1. Select a random sample (of size $n$), with replacement, from the observations in the original sample. This is called a bootstrap sample. 
+2. Perform the original regression procedure on the bootstrap sample, and obtain the estimate of interest.
+3. Repeat the sampling with replacement a large number ($B$) of times, and for each new bootstrap sample, obtain the estimate of interest, so that we have a collection of bootstrap estimates.
+
+We want to choose $n=100$ (corresponding to Step 1) so we generate a bootstrapped sample that is the same size as our learning set and has the same distribution as the learning set. Next, we perform LASSO regression to estimate the coefficients (Step 2). We perform this $B=1000$ times (Step 3). So, we obtain 1000 vectors of LASSO estimated regression coefficients (i.e. a collection of bootstrap estimates of the LASSO regression coefficients). 
+
+To estimate bias, covariance, and MSE we need to estimate the conditional mean, $E[\hat{\beta}_n^{\text{LASSO}}|\textbf{X}_n]$. The bootstrap allows us to do this empirically by estimating the conditional mean as the average the $B$ bootstrap estimates of the LASSO regression coefficients, yielding smoothed LASSO estimates of the regression coefficients. This method is clearly explained and suggested by Efron in 2014 in the article *Estimation and Accuracy after Model Selection*.
+
+Now we can express the estimates of the bias, covariance, and MSE as a function of these smoothed coefficients.
+
+$\hat{\text{Bias}}[\hat{\beta}_n^{\text{LASSO}}|\textbf{X}_n] = E[\hat{\beta}_n^{\text{LASSO}}|\textbf{X}_n] - \beta = \frac{1}{B}\sum_{b=1}^B\hat{\beta}_{n,b}^{\text{LASSO}}-\beta$
+
+$\hat{\text{Cov}}[\hat{\beta}_n^{\text{LASSO}}|\textbf{X}_n]$.
+
+$\hat{\text{MSE}}[\hat{\beta}_n^{\text{LASSO}}|\textbf{X}_n]=\hat{\text{Var}}[\hat{\beta}_n^{\text{LASSO}}|\textbf{X}_n] + \big(\hat{\text{Bias}}[\hat{\beta}_n^{\text{LASSO}}|\textbf{X}_n]\big)^2$. 
+
+Regarding the assumption and the variables we condition on, we have the same case as in part D. That is, the bias and covariance matrices of the bootstrapped LASSO regression estimators are conditional on the design matrix of the learning set and assume the model from Equation (1).
+
+```{r}
+#Bootstrap
+p <- J
+B <-1000
+n<-nrow(x) 
+beta.1se.bs<-matrix(NA,B,p) 
+beta.min.bs<-matrix(NA,B,p)
+
+for (i in 1:B){ 
+  ind<-sample(n,replace=TRUE) 
+  data.bs<-data[ind,] 
+  x.bs<-x[ind,]
+  y.bs<-y[ind]
+  fit<-glmnet(x.bs,y.bs,alpha=1,lambda=lambda.se)
+  #fit<-cv.glmnet(x.bs,y.bs,alpha=1)
+  beta.1se.bs[i,]<-as.vector(coef(fit,s="lambda.1se"))[-1]
+  fit<-glmnet(x.bs,y.bs,alpha=1,lambda=lambda.min)
+  #fit<-cv.glmnet(x.bs,y.bs,alpha=1)
+  beta.min.bs[i,]<-as.vector(coef(fit,s="lambda.min"))[-1]
+  print(i)
+}
+
+```
+
+### Collaborators & Resources
+
+PH240D 'Regularized Regression' Lecture Slides
+
+PH240D 'Regularized Regression' Example with R Script
+
+Tibshirani, 1996 *Regression Shrinkage and Selection via the LASSO*
+
+Efron, 2014 *Estimation and Accuracy after Model Selection* 
+
+Tommy Carpenito
+
