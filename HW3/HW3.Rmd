@@ -1,0 +1,44 @@
+---
+title: "PB HLTH C240D/STAT C245D: Assignment #3"
+author: "Rachael Phillips"
+date: "November 28, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Maximum likelihood estimation of the ABO blood group allele frequencies using the EM algorithm
+
+The ABO *blood groups* were the first to be discovered and are important in assuring safe blood transfusions
+(Cf. Landsteiner, 1930 Nobel Prize in Physiology and Medicine, \texttt{nobelprize.org/nobel prizes/medicine/laureates/1930}
+As indicated in Table 1, the ABO blood groups are characterized by the presence or absence of *antigens* on the surface of red blood cells and *antibodies* in serum. The ABO locus has three *alleles*, A, B, and O, leading to $3^2$ = $9$ *phased genotypes*, $3 + 3 \times 2/2 = 6$ *unphased genotypes*, and four *phenotypes*, the blood groups **A**, **B**, **AB**, and **O**.
+
+Let $\pi = (\pi_A,\pi_B,\pi_O)$ denote the ABO allele frequencies in a well-defined population of interest. Under the assumption of *Hardy-Weinberg equilibrium* (HWE), the maternal and paternal alleles are independent, i.e., genotype frequencies are products of allele frequencies. Let $Y = (Y_A,Y_B,Y_{AB},Y_O)$ denote the ABO phenotype counts for a random sample of $n$ individuals from the population of interest.
+
+The objective of this assignment is to apply the EM algorithm to derive maximum likelihood estimates of the ABO allele frequencies for a dataset from the classical article of Clarke et al. (1959). Specifically, consider the following ABO phenotype counts for a sample of $n$ = 521 duodenal ulcer patients (Clarke et al., 1959, Table III): $Y_A$ = 186, $Y_B$ = 38, $Y_{AB}$ = 13, and $Y_O$ = 284. For simplicity, you may assume that the $n$ = 521 patients are a random sample from a well-defined population, with Hardy-Weinberg equilibrium at the ABO locus.
+
+## Question 3. Derivation of EM algorithm.
+Derive the expectation-maximization algorithm (EM) for maximum likelihood estimation (MLE) of the ABO allele frequencies $\pi = (\pi_A,\pi_B,\pi_O)$, based on ABO phenotype counts from a random sample of n individuals from a well-defined population, with Hardy-Weinberg equilibrium at the ABO locus.
+
+Specifically, define the observed incomplete and unobserved complete data structures, provide the incomplete and complete data log-likelihood functions, supply the main EM Q-function, and derive explicit solutions for the E- and M-steps.
+
+
+## Question 4. Software implementation of EM algorithm.
+
+Write an R function implementing the EM algorithm for maximum likelihood estimation of the ABO allele frequencies $\pi = (\pi_A,\pi_B,\pi_O)$.
+
+Arguments to this function should include: the phenotype counts, starting values for the allele frequencies, stopping criteria; it should return candidate MLE for the allele frequencies and the corresponding value of the observed data log-likelihood.
+
+## Question 5. Application of EM algorithm.
+
+Apply the EM algorithm to derive maximum likelihood estimates of the ABO allele frequencies $\pi = (\pi_A,\pi_B,\pi_O)$ for the Clarke et al. (1959) dataset.
+
+Trace the progress of the EM algorithm by providing a table of candidate MLE for the allele frequencies and corresponding values of the observed data log-likelihood at each iteration.
+
+Also provide graphical summaries of these results.
+
+Comment on the EM algorithm’s performance in terms of sensitivity to starting values, convergence, and any other features you deem relevant.
+
+Compare the results from your implementation of the EM algorithm to those from one of the R optimization functions (e.g., optim).
