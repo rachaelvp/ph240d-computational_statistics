@@ -83,7 +83,7 @@ Display and comment on the log-likelehood surface for the ABO blood group phenot
 
 If we allow the trinomial probabilities to individually vary under the constraint that the sum of these three probabilities sums to one and, for each combination of values, we recalculate the log-likelihood, then we can plot the results as a goodness (or badness)-of-fit surface. The surface depicts the value of the log-likelihood for every combination of parameter values evaluated gives us an understanding of how the likelihood depends on one or more parameters. 
 
-Barycentric coordinates are triples of numbers corresponding to masses placed at the vertices of a reference triangle. These masses then determine a point, which is the geometric centroid of the three masses and is identified with coordinates. Thus barycentric coordinates are another method of introducing coordinates into a space.
+Barycentric coordinates are triples of numbers corresponding to masses placed at the vertices of a reference triangle. These masses then determine a point, which is the geometric centroid of the three masses and is identified with coordinates. Thus barycentric coordinates are a method of introducing coordinates into a space.
 
 ```{r, cache = TRUE, message=FALSE, warning=FALSE}
 
@@ -143,6 +143,9 @@ pi %>%
   Rlab(expression(paste("0,0,",pi[O]))) 
 
 ```
+
+From the contour plot of the log-likelihood surface, we see that the log-likelihood is maximized for $\pi_A$ slightly less than .25 and $\pi_B$ less than .1 but we do not see how this relationship changes in regards to $\pi_O$. The Barycentric plot of the log-likelihood surface displays the trinomial log-likelihood surface from 3D cartesian coordinates as barycentric coordinates therevy preserving the original coordinate space. The Barycentric plot gives us the advantage over the contour plot of visualizing all three of the allele frequencies. We clearly see the relationship needed between all three allele frequencies for the log-likelihood to be maximized. Specifically, we see that $\pi_O$ must be quite large in comparison to the other two allele frequencies. Even though we could have extrapolated this information regarding $\pi_O$ from the contour plot, it is still a better visual to consider the Barycentric plot where all three allele frequencies are displayed. 
+ 
 
 ## Question 3. Derivation of EM algorithm.
 Derive the *expectation-maximization algorithm* (EM) for *maximum likelihood estimation* (MLE) of the ABO allele frequencies $\pi = (\pi_A,\pi_B,\pi_O)$, based on ABO phenotype counts from a random sample of $n$ individuals from a well-defined population, with Hardy-Weinberg equilibrium at the ABO locus.
@@ -211,7 +214,7 @@ Arguments to this function should include: the phenotype counts, starting values
 
 ```{r, cache = TRUE, message=FALSE, warning=FALSE}
 
-EM <- function(pi, Y,  threshold = 1e-6, debug=FALSE){
+EM <- function(pi, Y,  threshold = 1e-7, debug=FALSE){
 
   # evaluate log-likelihood using initial estimates
   llk <- lnL(pi, Y)
@@ -267,7 +270,7 @@ Compare the results from your implementation of the EM algorithm to those from o
 # asked to provide output that differs from the output
 # in Question 4
 
-EM <- function(pi, Y, threshold = 1e-12){
+EM <- function(pi, Y, threshold = 1e-7){
 
   # evaluate log-likelihood using initial estimates
   llk <- lnL(pi, Y)
@@ -356,6 +359,38 @@ EM_melt2 %>%
        Clarke et al. (1959) dataset", 
        x = "Iteration", y = "Log-Likelihood")
 
+##############################
+# EM algorithm's performance
+##############################
+
+# 1. to starting allele frequencies that are closer to the MLEs
+EM(pi = c(.2, .1, .7), Y = c(186,38,13,284))
+
+EM_melt <- melt(EM_results, id.vars="iteration", measure.vars=c("pi_A","pi_B","pi_O"))
+EM_melt %>%
+  ggplot(aes(x = iteration, y = value)) +
+  geom_point(aes(color = variable)) +
+  guides(color=guide_legend("Allele Type"), 
+         linetype = guide_legend("Allele Type")) +
+  scale_color_discrete(labels = c(expression(~pi[A]), 
+                                  expression(~pi[B]), 
+                                  expression(~pi[O]))) +
+  labs(title="EM Algorithm Results from
+       Clarke et al. (1959) dataset", 
+       y = "Allele Frequencies", x = "Iteration")
+
+EM_melt2 <- melt(EM_results, id.vars="iteration", measure.vars="llk")
+EM_melt2 %>%
+  ggplot(aes(x = iteration, y = value))+
+  geom_point()+
+  labs(title = "EM Algorithm Results from
+       Clarke et al. (1959) dataset", 
+       x = "Iteration", y = "Log-Likelihood")
+
+# 2. to varying thresholds of convergence
+EM(pi = c(.2, .1, .7), Y = c(186,38,13,284), threshold = 1e-12)
+EM(pi = c(1/3, 1/3, 1/3), Y = c(186,38,13,284), threshold = 1e-12)
+
 #########################################
 # comparison to R optimization functions
 #########################################
@@ -365,14 +400,20 @@ EM_melt2 %>%
 pi <- c(1/3, 1/3, 1/3)
 optim(pi[1:2], fn = function(x) - lnL(Y = c(186,38,13,284), pi=c(x[1], x[2], 1-x[1]-x[2])))
 ```
+
+In terms of sensitivity to starting values and without changing the threshold for convergence, we see that the EM algorithm’s performance is affected in the number of iterations. The iterations do decrease if we approximate the maximum likelihood estimators more closely. We also note that as the threshold for convergence decreases the difference in output from later iterations also decreases. These relationships are expected but it is interesting to visualize them. 
+
+When we compare the results from the intial implementation of the EM algorithm to those from the R optimization function we see that the maximum likelihood estimators for the allele frequencies (\$par) are almost identical. This small difference is due to the R optimization function converging to zero and the EM algorithm set to converge to a very small value that's close to zero, "pseudo-ish-convergence". (Note: I tried setting my threshold to zero for the EM algorithm and R Studio wasn't happy). Also, if the R optimization iteration limit of 10,000 was exceeded, a value of 1 would have be reported for the convergence in the output. Thus, we could probably acheive identical results to the R optimization function if we set an iteration limit to 10,000 in the EM algorithm function. The log-likelihood (\$value) is identical for both methods. There were 71 total calls to the log-likelihood function and the gradient ($counts) and this code ran very quickly. I am certain that 71 iterations of my EM alogrithm would run much slower. In conclusion, the R optimization function does perform better than my mediocre EM algorithm implementation but I am no Wizard of R, it was still a fun exercise!
+
 ### Collaborators & References
 
-*Fix later*:
+Tommy Carpenito
 
-http://courses.washington.edu/b516/lectures_2009/EM_ALGORITHM.pdf
+University of Washington Statistical Methods in Genetic Epidemiology Course Notes: The EM Algorithm (http://courses.washington.edu/b516/lectures_2009/EM_ALGORITHM.pdf)
 
-http://galton.uchicago.edu/~eichler/stat24600/Handouts/s04.pdf
+University of Chicago Statistical Theory and Methods III Course Handouts: Allele Frequency Estimation (http://galton.uchicago.edu/~eichler/stat24600/Handouts/s04.pdf)
 
-https://math.stackexchange.com/questions/1162493/conditional-probability-of-multinomial-distribution
+Stack Exchange Question: Conditional Probability of Multinomial Distribution (https://math.stackexchange.com/questions/1162493/conditional-probability-of-multinomial-distribution)
 
-https://www.umass.edu/landeco/teaching/ecodata/schedule/likelihood.pdf
+UMass Amherst Analysis of Environmental Data Course Notes: Conceptual Foundations, Maximum Likelihood Inference
+(https://www.umass.edu/landeco/teaching/ecodata/schedule/likelihood.pdf)
